@@ -2,25 +2,62 @@ import tkinter as tk
 import subprocess
 
 PROGRAM_NAME_TO_WINGET_ID = {
-    #dev
+    #dev editors
     "VS Code" : "Microsoft.VisualStudioCode",
+    "Visual Studio Community 2022" : "Microsoft.VisualStudio.2022.Community",
+    "PyCharm Community Edition"  : "JetBrains.PyCharm.Community",
+    "IntelliJ IDEA Community Edition" : "JetBrains.IntelliJIDEA.Community",
+    "Atom" : "GitHub.Atom",
+    "Android Studio" : "Google.AndroidStudio",
+    "Notepad++" : "Notepad++.Notepad++",
+
+    #dev tools
     "Postman" : "Postman.Postman",
     "Windows Terminal" : "Microsoft.WindowsTerminal",
+    "Git" : "Git.Git",
+    "Node.js" : "OpenJS.NodeJS",
+    "Python 3.12" : "Python.Python.3.12",
+    "Python 2.7" : "Python.Python.2",
+    "Java 8" : "Oracle.JavaRuntimeEnvironment",
+    "PuTTY" : "PuTTY.PuTTY",
 
     # communication
     "Discord" : "Discord.Discord",
+    "Zoom" : "Zoom.Zoom",
+    "Microsoft Teams" : "Microsoft.Teams",
+    "Cisco webex" : "Cisco.WebexTeams",
+    "Telegram Desktop" : "Telegram.TelegramDesktop",
+    "Skype" : "Microsoft.Skype",
 
     # game launchers
     "Steam" : "Valve.Steam",
+    "Epic Games Launcher" : "EpicGames.EpicGamesLauncher",
+    "EA app" : "ElectronicArts.EADesktop",
+
+    # media
+    "VLC media player" : "VideoLAN.VLC",
+    "Spotify" : "Spotify.Spotify",
+    "OBS Studio" : "OBSProject.OBSStudio",
 
     # browsers
     "Google Chrome" : "Google.Chrome",
     "Opera GX" : "Opera.OperaGX",
+    "Mozilla Firefox" : "Mozilla.Firefox",
 
     # other
     "MSI Afterburner" : "Guru3D.Afterburner",
     "Rivatuner Statistics Server" : "Guru3D.RTSS",
+    "HWiNFO" : "REALiX.HWiNFO 7.64",
     "QTTabBar" : "QTTabBar.QTTabBar",
+    "qBittorrent" : "qBittorrent.qBittorrent",
+    "SignalRgb" : "WhirlwindFX.SignalRgb",
+    "Display Driver Uninstaller" : "Wagnardsoft.DisplayDriverUninstaller",
+    "WinRAR" : "RARLab.WinRAR",
+    "7-Zip" : "7zip.7zip",
+    "VMware Workstation Player" : "VMware.WorkstationPlayer",
+    "NZXT CAM" : "NZXT.CAM",
+    "CinebenchR23" : "Maxon.CinebenchR23",
+    "Heaven Benchmark" : "Unigine.HeavenBenchmark",
 }
 
 CHECKBOXES = []
