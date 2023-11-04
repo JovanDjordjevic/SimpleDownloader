@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import subprocess
+from PIL import Image, ImageTk
 
 # list of programs that are available for installation.
 # Key is "section name" and value is a map where key is "program name" and value is "winget id"
@@ -50,7 +51,7 @@ PROGRAM_LIST = {
     "Other" : {
         "MSI Afterburner" : "Guru3D.Afterburner",
         "Rivatuner Statistics Server" : "Guru3D.RTSS",
-        "HWiNFO" : "REALiX.HWiNFO 7.64",
+        "HWiNFO" : "REALiX.HWiNFO",
         "QTTabBar" : "QTTabBar.QTTabBar",
         "qBittorrent" : "qBittorrent.qBittorrent",
         "SignalRgb" : "WhirlwindFX.SignalRgb",
@@ -122,11 +123,19 @@ def main():
         singleSectionFrame.pack(side=tk.LEFT, padx=20)
 
         ttk.Label(singleSectionFrame, text=sectionName).pack(side=tk.TOP)
+        ttk.Label(singleSectionFrame, text="").pack(side=tk.TOP) # empty label for spacing
 
         for programName, wingetId in progToWingetIdMap.items():
             checkboxAndIconFrame = ttk.Frame(singleSectionFrame)
             checkboxAndIconFrame.pack(side=tk.TOP)
             CHECKBOXES.append(ProgramCheckbox(programName, wingetId, checkboxAndIconFrame))
+
+            image = Image.open(f"icons/{wingetId}.png").resize((30, 30))
+
+            icon = ImageTk.PhotoImage(image)
+            imageLabel = ttk.Label(checkboxAndIconFrame, image=icon)
+            imageLabel.image = icon  # Keep a reference to the image to prevent it from being garbage collected
+            imageLabel.pack(side=tk.RIGHT, padx=5)
 
     downloadButton = ttk.Button(root, text="Download selected", command=downloadAllSelected)
     downloadButton.pack()
