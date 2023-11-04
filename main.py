@@ -1,4 +1,5 @@
 import tkinter as tk
+import tkinter.font as tkFont
 from tkinter import ttk
 import subprocess
 from PIL import Image, ImageTk
@@ -74,7 +75,7 @@ class ProgramCheckbox:
 
         self.checkBoxVar = tk.BooleanVar()
         checkbox = ttk.Checkbutton(root, text=self.programName, variable=self.checkBoxVar)
-        checkbox.pack(side=tk.LEFT)
+        checkbox.grid(row=0, column=1)
 
     def isChecked(self):
         return self.checkBoxVar.get() == True
@@ -108,37 +109,53 @@ def downloadAllSelected():
         if programCheckbox.isChecked():
             downloadOne(programCheckbox.getProgramName(), programCheckbox.getWingetId())
 
+def configureStyle():
+    defaultFont = tkFont.nametofont("TkDefaultFont")
+    defaultFont.configure(size=12)
+
 def main():
     root = tk.Tk()
     root.title("Simple downloader")
 
-    label = ttk.Label(root, text="Select programs you wish to download:")
-    label.pack(side=tk.TOP)
+    configureStyle()
 
-    checkboxSectionsFrame = ttk.Frame(root)
-    checkboxSectionsFrame.pack(padx=10, pady=10)
+    mainLabel = ttk.Label(root, text="Select programs you wish to download:")
+    mainLabel.grid(row=0, column=0, columnspan=len(PROGRAM_LIST))
 
+    allSectionsFrame = ttk.Frame(root)
+    allSectionsFrame.grid(row=1, column=0, columnspan=len(PROGRAM_LIST))
+
+    currentSectionColumn = 0
     for sectionName, progToWingetIdMap in PROGRAM_LIST.items():
-        singleSectionFrame = ttk.Frame(checkboxSectionsFrame)
-        singleSectionFrame.pack(side=tk.LEFT, padx=20)
+        singleSectionFrame = ttk.LabelFrame(allSectionsFrame)
+        singleSectionFrame.grid(row=0, column=currentSectionColumn, sticky="ns", padx=5, pady=10)
 
-        ttk.Label(singleSectionFrame, text=sectionName).pack(side=tk.TOP)
-        ttk.Label(singleSectionFrame, text="").pack(side=tk.TOP) # empty label for spacing
+        sectionLabel = ttk.Label(singleSectionFrame, text=sectionName)
+        sectionLabel.grid(row=0, column=0)
 
+        singleProgramRow = 1
         for programName, wingetId in progToWingetIdMap.items():
             checkboxAndIconFrame = ttk.Frame(singleSectionFrame)
-            checkboxAndIconFrame.pack(side=tk.TOP)
+            checkboxAndIconFrame.grid(row=singleProgramRow, column=0, sticky="we")
+
+            icon = ImageTk.PhotoImage(
+                Image.open(f"icons/{wingetId}.png").resize((32, 32))
+            )
+            # image will be container within a label isntead of text
+            imageLabel = ttk.Label(checkboxAndIconFrame, image=icon)
+            # Keep a reference to the image to prevent it from being garbage collected
+            imageLabel.image = icon
+            imageLabel.grid(row=0, column=0)
+
+            # checkboxes will have (row=0, column=1)
             CHECKBOXES.append(ProgramCheckbox(programName, wingetId, checkboxAndIconFrame))
 
-            image = Image.open(f"icons/{wingetId}.png").resize((30, 30))
-
-            icon = ImageTk.PhotoImage(image)
-            imageLabel = ttk.Label(checkboxAndIconFrame, image=icon)
-            imageLabel.image = icon  # Keep a reference to the image to prevent it from being garbage collected
-            imageLabel.pack(side=tk.RIGHT, padx=5)
+            singleProgramRow += 1
+        
+        currentSectionColumn += 1
 
     downloadButton = ttk.Button(root, text="Download selected", command=downloadAllSelected)
-    downloadButton.pack()
+    downloadButton.grid(row=2, column=0, columnspan=len(PROGRAM_LIST))
 
     root.mainloop()
 
