@@ -139,7 +139,7 @@ def main():
             checkboxAndIconFrame.grid(row=singleProgramRow, column=0, sticky="we")
 
             icon = ImageTk.PhotoImage(
-                Image.open(f"icons/{wingetId}.png").resize((32, 32))
+                Image.open(f"icons/{wingetId}.ico")
             )
             # image will be container within a label isntead of text
             imageLabel = ttk.Label(checkboxAndIconFrame, image=icon)

@@ -1,5 +1,6 @@
 venv/
 TODO.txt
+sandbox/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
