@@ -37,6 +37,8 @@ class SimpleDownloaderApp:
         # tkinter widgets and needed tk variables that must be globaly available
         self.mRootElement = tk.Tk()
         self.mDownloadButton = ttk.Button(self.mRootElement, text="Download selected", command=self.onDownloadButtonClicked)
+        self.mCurrentStatusVar = tk.StringVar()
+        self.mCurrentStatusLabel = ttk.Label(self.mRootElement, textvariable=self.mCurrentStatusVar)
         self.mProgressBarVar = tk.DoubleVar()
         # other needed variables
         self.mAllImages = dict()
@@ -51,11 +53,16 @@ class SimpleDownloaderApp:
         self.mTotalCompletedJobs = 0
         self.mSuccessfulJobs = 0
         self.mFailedJobs = 0
+        self.mCurrentStatusVar.set("")
         self.mProgressBarVar.set(0)
 
     def downloadOne(self, programName : str, wingetId : str):
         try:
             print(f"Installing {programName}...")
+
+            self.mCurrentStatusVar.set(f"{self.mTotalCompletedJobs + 1}/{self.mNumJobs} Installing {programName}...")
+            self.mRootElement.update_idletasks()
+
             process = subprocess.Popen(["winget", "install", "-e", "--id", wingetId], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
             
             while process.poll() is None:
@@ -143,8 +150,10 @@ class SimpleDownloaderApp:
 
         self.mDownloadButton.grid(row=2, column=0, columnspan=len(AVAILABLE_PROGRAMS))
 
+        self.mCurrentStatusLabel.grid(row=3, column=0, sticky="we")
+
         progressBar = ttk.Progressbar(self.mRootElement, orient=tk.HORIZONTAL, variable=self.mProgressBarVar)
-        progressBar.grid(row=3, column=0, sticky="we", columnspan=len(AVAILABLE_PROGRAMS), padx=10, pady=10)
+        progressBar.grid(row=4, column=0, sticky="we", columnspan=len(AVAILABLE_PROGRAMS), padx=10, pady=10)
 
     def run(self):
         self.mRootElement.mainloop()
