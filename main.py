@@ -68,6 +68,15 @@ PROGRAM_LIST = {
 
 CHECKBOXES = []
 
+# for progress bar
+NUM_JOBS = 0
+COMPLETED_JOBS = 0
+NUM_SUCCESSFUL_JOBS = 0
+NUM_FAILED_JOBS = 0
+
+root = None
+progressBarVar = None
+
 class ProgramCheckbox:
     def __init__(self, programName : str, wingetId : str, root):
         self.programName = programName
@@ -87,6 +96,12 @@ class ProgramCheckbox:
         return self.wingetId
 
 def downloadOne(programName : str, wingetId : str):
+    global NUM_SUCCESSFUL_JOBS
+    global NUM_FAILED_JOBS
+    global COMPLETED_JOBS
+    global progressBarVar
+    global root
+
     try:
         print(f"Installing {programName}...")
         process = subprocess.Popen(["winget", "install", "-e", "--id", wingetId], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
@@ -99,21 +114,59 @@ def downloadOne(programName : str, wingetId : str):
 
         if process.returncode == 0:
             print(f"{programName} has been installed successfully.")
+            NUM_SUCCESSFUL_JOBS += 1
         else:
             print(f"{programName} was not installed (an error occured or it already exists).")
+            NUM_FAILED_JOBS += 1
     except Exception as e: 
         print(f"Failed to install {programName}. Caught exception: {e}")
+        NUM_FAILED_JOBS += 1
+
+    COMPLETED_JOBS += 1
+    progressBarVar.set(COMPLETED_JOBS * 100 / NUM_JOBS)
+    root.update_idletasks()
 
 def downloadAllSelected():
     for programCheckbox in CHECKBOXES:
         if programCheckbox.isChecked():
             downloadOne(programCheckbox.getProgramName(), programCheckbox.getWingetId())
 
+def resetVariablesAndUI():
+    global NUM_JOBS
+    global COMPLETED_JOBS
+    global NUM_SUCCESSFUL_JOBS
+    global NUM_FAILED_JOBS
+    global progressBarVar
+
+    NUM_JOBS = 0
+    COMPLETED_JOBS = 0
+    NUM_SUCCESSFUL_JOBS = 0
+    NUM_FAILED_JOBS = 0
+    progressBarVar.set(0)  
+
+def onDownloadButtonClicked(downloadButton : ttk.Button):
+    global NUM_JOBS
+    global root
+
+    resetVariablesAndUI()
+    downloadButton['state'] = tk.DISABLED
+    root.update_idletasks()
+
+    for programCheckbox in CHECKBOXES:
+        if programCheckbox.isChecked():
+            NUM_JOBS += 1
+
+    downloadAllSelected()
+
+    downloadButton['state'] = tk.NORMAL
+    root.update_idletasks()
+
 def configureStyle():
     defaultFont = tkFont.nametofont("TkDefaultFont")
     defaultFont.configure(size=12)
 
 def main():
+    global root
     root = tk.Tk()
     root.title("Simple downloader")
 
@@ -154,8 +207,13 @@ def main():
         
         currentSectionColumn += 1
 
-    downloadButton = ttk.Button(root, text="Download selected", command=downloadAllSelected)
+    downloadButton = ttk.Button(root, text="Download selected", command=lambda: onDownloadButtonClicked(downloadButton))
     downloadButton.grid(row=2, column=0, columnspan=len(PROGRAM_LIST))
+
+    global progressBarVar
+    progressBarVar = tk.DoubleVar()
+    progressBar = ttk.Progressbar(root, orient=tk.HORIZONTAL, variable=progressBarVar)
+    progressBar.grid(row=3, column=0, sticky="we", columnspan=len(PROGRAM_LIST), padx=10, pady=10)
 
     root.mainloop()
 
