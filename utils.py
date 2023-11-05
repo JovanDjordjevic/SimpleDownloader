@@ -53,3 +53,44 @@ class CollapsibleFrame(tk.Frame):
         else:
             self.subFrame.grid_forget()
             self.toggleButton.configure(text='+')
+
+class VerticallyScrollableFrame(ttk.Frame):
+    """
+        A frame that can be scrolled vertically
+    """
+
+    def __init__(self, parent, *args, **kwargs):
+        ttk.Frame.__init__(self, parent, *args, **kwargs)
+
+        # Create a canvas object and a vertical scrollbar for scrolling it.
+        vscrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL)
+        vscrollbar.pack(fill=tk.Y, side=tk.LEFT, expand=tk.FALSE, padx=20)
+
+        self.canvas = tk.Canvas(self, bd=0, highlightthickness=0, yscrollcommand=vscrollbar.set)
+        self.canvas.pack(side=tk.RIGHT, fill=tk.BOTH, expand=tk.TRUE)
+
+        vscrollbar.config(command=self.canvas.yview)
+
+        # Create a frame inside the canvas which will be scrolled with it.
+        self.interior = interior = ttk.Frame(self.canvas)
+        self.interiorId = self.canvas.create_window(0, 0, window=interior,  anchor=tk.NW)
+
+        self.interior.bind('<Configure>', self.configureInterior)
+        self.canvas.bind('<Configure>', self.configureCanvas)
+
+    def configureInterior(self, event):
+        # Update the scrollbars to match the size of the inner frame.
+        interiorWidth = self.interior.winfo_reqwidth()
+
+        self.canvas.config(scrollregion=f"0 0 {interiorWidth} {self.interior.winfo_reqheight()}")
+
+        if interiorWidth != self.canvas.winfo_width():
+            # Update the canvas's width to fit the inner frame.
+            self.canvas.config(width=interiorWidth)
+
+    def configureCanvas(self, event):
+        canvasWidth = self.canvas.winfo_width()
+
+        if self.interior.winfo_reqwidth() != canvasWidth:
+            # Update the inner frame's width to fill the canvas.
+            self.canvas.itemconfigure(self.interiorId, width=canvasWidth)

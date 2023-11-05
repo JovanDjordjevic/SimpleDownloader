@@ -5,7 +5,8 @@ import tkinter.font as tkFont
 from tkinter import ttk
 
 from availablePrograms import AVAILABLE_PROGRAMS
-from utils import ProgramCheckbox, CollapsibleFrame
+# from utils import ProgramCheckbox, CollapsibleFrame
+from utils import *
 class SimpleDownloaderApp:
     """
         Main class for Simple Downloader app
@@ -18,8 +19,11 @@ class SimpleDownloaderApp:
         self.mCurrentStatusVar = tk.StringVar()
         self.mCurrentStatusLabel = ttk.Label(self.mRootElement, textvariable=self.mCurrentStatusVar)
         self.mProgressBarVar = tk.DoubleVar()
-        self.mLogFrame = ttk.LabelFrame(self.mRootElement)
+        # self.mLogFrame = ttk.LabelFrame(self.mRootElement)
+        self.mLogFrame = VerticallyScrollableFrame(self.mRootElement)
+        # self.mTempLogFrame = VerticallyScrollableFrame(self.mRootElement)
         self.mAllLogsCollapsible = None
+
         # other needed variables
         self.mAllImages = dict()
         self.mProgramCheckboxes = list()
@@ -40,10 +44,10 @@ class SimpleDownloaderApp:
         self.mCurrentStatusVar.set("")
         self.mProgressBarVar.set(0)
 
-        for widget in self.mLogFrame.winfo_children():
+        for widget in self.mLogFrame.interior.winfo_children():
             widget.destroy()
 
-        self.mAllLogsCollapsible = CollapsibleFrame(self.mLogFrame, text='Detailed winget output per program', relief="raised", borderwidth=1)
+        self.mAllLogsCollapsible = CollapsibleFrame(self.mLogFrame.interior, text='Detailed winget output per program', relief="raised", borderwidth=1)
         self.mAllLogsCollapsible.grid(row=0, column=0, columnspan=len(AVAILABLE_PROGRAMS), sticky="we")
 
         self.refreshEntireUI()
