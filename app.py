@@ -5,29 +5,7 @@ import tkinter.font as tkFont
 from tkinter import ttk
 
 from availablePrograms import AVAILABLE_PROGRAMS
-
-class ProgramCheckbox:
-    """
-        Class that wraps a program to it's associated checkbox
-    """
-
-    def __init__(self, programName : str, wingetId : str, root):
-        self.programName = programName
-        self.wingetId = wingetId
-
-        self.checkBoxVar = tk.BooleanVar()
-        checkbox = ttk.Checkbutton(root, text=self.programName, variable=self.checkBoxVar)
-        checkbox.grid(row=0, column=1)
-
-    def isChecked(self):
-        return self.checkBoxVar.get() == True
-    
-    def getProgramName(self):
-        return self.programName
-
-    def getWingetId(self):
-        return self.wingetId
-
+from utils import ProgramCheckbox, CollapsibleFrame
 class SimpleDownloaderApp:
     """
         Main class for Simple Downloader app
@@ -40,6 +18,8 @@ class SimpleDownloaderApp:
         self.mCurrentStatusVar = tk.StringVar()
         self.mCurrentStatusLabel = ttk.Label(self.mRootElement, textvariable=self.mCurrentStatusVar)
         self.mProgressBarVar = tk.DoubleVar()
+        self.mLogFrame = ttk.LabelFrame(self.mRootElement)
+        self.mAllLogsCollapsible = None
         # other needed variables
         self.mAllImages = dict()
         self.mProgramCheckboxes = list()
@@ -47,6 +27,10 @@ class SimpleDownloaderApp:
         self.mTotalCompletedJobs = 0
         self.mSuccessfulJobs = 0
         self.mFailedJobs = 0
+
+    def refreshEntireUI(self):
+        self.mRootElement.update()
+        self.mRootElement.update_idletasks()
 
     def resetVariablesAndUI(self):
         self.mNumJobs = 0
@@ -56,34 +40,49 @@ class SimpleDownloaderApp:
         self.mCurrentStatusVar.set("")
         self.mProgressBarVar.set(0)
 
+        for widget in self.mLogFrame.winfo_children():
+            widget.destroy()
+
+        self.mAllLogsCollapsible = CollapsibleFrame(self.mLogFrame, text='Detailed winget output per program', relief="raised", borderwidth=1)
+        self.mAllLogsCollapsible.grid(row=0, column=0, columnspan=len(AVAILABLE_PROGRAMS), sticky="we")
+
+        self.refreshEntireUI()
+
     def downloadOne(self, programName : str, wingetId : str):
+        singleProgramLog = CollapsibleFrame(self.mAllLogsCollapsible.subFrame, text=f"{programName}", relief="raised", borderwidth=1)
+        singleProgramLog.grid(pady=2, padx=2, sticky="we")
+
+        wingetOutputTextArea = tk.Text(singleProgramLog.subFrame, wrap=tk.WORD, width=150, height=5)
+        wingetOutputTextArea.grid(padx=10, pady=10)
+
         try:
-            print(f"Installing {programName}...")
+            wingetOutputTextArea.insert(tk.END, f"Installing {programName}...\n")
 
             self.mCurrentStatusVar.set(f"{self.mTotalCompletedJobs + 1}/{self.mNumJobs} Installing {programName}...")
-            self.mRootElement.update_idletasks()
+            self.refreshEntireUI()
 
             process = subprocess.Popen(["winget", "install", "-e", "--id", wingetId], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
             
             while process.poll() is None:
-                output = process.stdout.readline()
+                output = process.stdout.readline().strip()
                 if output:
-                    print(output.strip())
+                    wingetOutputTextArea.insert(tk.END, f"{output}\n")
+                    self.refreshEntireUI()
 
             if process.returncode == 0:
-                print(f"{programName} has been installed successfully.")
+                wingetOutputTextArea.insert(tk.END, f"{programName} has been installed successfully.\n")
                 self.mSuccessfulJobs += 1
             else:
-                print(f"{programName} was not installed (an error occured or it already exists).")
+                wingetOutputTextArea.insert(tk.END, f"{programName} was not installed (an error occured or it already exists).\n")
                 self.mFailedJobs += 1
 
         except Exception as e: 
-            print(f"Failed to install {programName}. Caught exception: {e}")
+            wingetOutputTextArea.insert(tk.END, f"Failed to install {programName}. Caught exception: {e}\n")
             self.mFailedJobs += 1
 
         self.mTotalCompletedJobs += 1
         self.mProgressBarVar.set(self.mTotalCompletedJobs * 100 / self.mNumJobs)
-        self.mRootElement.update_idletasks()
+        self.refreshEntireUI()
 
     def downloadAllSelected(self):
         for programCheckbox in self.mProgramCheckboxes:
@@ -93,7 +92,7 @@ class SimpleDownloaderApp:
     def onDownloadButtonClicked(self):
         self.resetVariablesAndUI()
         self.mDownloadButton['state'] = tk.DISABLED
-        self.mRootElement.update_idletasks()
+        self.refreshEntireUI()
 
         for programCheckbox in self.mProgramCheckboxes:
             if programCheckbox.isChecked():
@@ -102,7 +101,7 @@ class SimpleDownloaderApp:
         self.downloadAllSelected()
 
         self.mDownloadButton['state'] = tk.NORMAL
-        self.mRootElement.update_idletasks()
+        self.refreshEntireUI()
 
     def configureStyle(self):
         defaultFont = tkFont.nametofont("TkDefaultFont")
@@ -154,6 +153,8 @@ class SimpleDownloaderApp:
 
         progressBar = ttk.Progressbar(self.mRootElement, orient=tk.HORIZONTAL, variable=self.mProgressBarVar)
         progressBar.grid(row=4, column=0, sticky="we", columnspan=len(AVAILABLE_PROGRAMS), padx=10, pady=10)
+
+        self.mLogFrame.grid(row=5, column=0, sticky="we", columnspan=len(AVAILABLE_PROGRAMS))
 
     def run(self):
         self.mRootElement.mainloop()
