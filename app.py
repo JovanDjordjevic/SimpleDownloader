@@ -59,6 +59,8 @@ class SimpleDownloaderApp:
         wingetOutputTextArea = tk.Text(singleProgramLog.subFrame, wrap=tk.WORD, width=150, height=5)
         wingetOutputTextArea.grid(padx=10, pady=10)
 
+        installedSuccessfully = False
+
         try:
             wingetOutputTextArea.insert(tk.END, f"Installing {programName}...\n")
 
@@ -75,14 +77,26 @@ class SimpleDownloaderApp:
 
             if process.returncode == 0:
                 wingetOutputTextArea.insert(tk.END, f"{programName} has been installed successfully.\n")
-                self.mSuccessfulJobs += 1
+                installedSuccessfully = True
             else:
                 wingetOutputTextArea.insert(tk.END, f"{programName} was not installed (an error occured or it already exists).\n")
-                self.mFailedJobs += 1
 
         except Exception as e: 
             wingetOutputTextArea.insert(tk.END, f"Failed to install {programName}. Caught exception: {e}\n")
+
+        indicatorIconPath = ""
+        if installedSuccessfully:
+            self.mSuccessfulJobs += 1
+            indicatorIconPath = "icons/success.ico"
+        else:
             self.mFailedJobs += 1
+            indicatorIconPath = "icons/error.ico"
+
+        indicatorIcon = ImageTk.PhotoImage(Image.open(indicatorIconPath))
+        imageLabel = ttk.Label(singleProgramLog.mainFrame, image=indicatorIcon)
+        # Keep a reference to the image to prevent it from being garbage collected
+        imageLabel.image = indicatorIcon
+        imageLabel.grid(row=0, column=2)
 
         self.mTotalCompletedJobs += 1
         self.mProgressBarVar.set(self.mTotalCompletedJobs * 100 / self.mNumJobs)
