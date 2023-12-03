@@ -33,7 +33,7 @@ jobs:
             - name: "Setup virtual environment"
               run: |
                 python -m venv venv
-                .\venv\Scripts\activate
+                .\venv\Scripts\Activate.ps1
             - name: "Install dependencies"
               run: |
                 python -m pip install --upgrade pip
