@@ -4,7 +4,6 @@ on:
     push:
         branches:
             - main
-            - create-packaging-workflow
 
 env:
     FORCE_COLOR: "1"
