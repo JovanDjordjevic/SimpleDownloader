@@ -17,6 +17,15 @@ class ProgramCheckbox:
     def isChecked(self):
         return self.checkBoxVar.get() == True
     
+    def check(self):
+        self.checkBoxVar.set(True)
+
+    def uncheck(self):
+        self.checkBoxVar.set(False)
+
+    def flip(self):
+        self.checkBoxVar.set(not self.checkBoxVar.get())
+
     def getProgramName(self):
         return self.programName
 

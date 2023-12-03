@@ -5,8 +5,8 @@ import tkinter.font as tkFont
 from tkinter import ttk
 
 from availablePrograms import AVAILABLE_PROGRAMS
-# from utils import ProgramCheckbox, CollapsibleFrame
 from utils import *
+
 class SimpleDownloaderApp:
     """
         Main class for Simple Downloader app
@@ -19,9 +19,8 @@ class SimpleDownloaderApp:
         self.mCurrentStatusVar = tk.StringVar()
         self.mCurrentStatusLabel = ttk.Label(self.mRootElement, textvariable=self.mCurrentStatusVar)
         self.mProgressBarVar = tk.DoubleVar()
-        # self.mLogFrame = ttk.LabelFrame(self.mRootElement)
+        self.mSelectAllVar = tk.BooleanVar()
         self.mLogFrame = VerticallyScrollableFrame(self.mRootElement)
-        # self.mTempLogFrame = VerticallyScrollableFrame(self.mRootElement)
         self.mAllLogsCollapsible = None
 
         # other needed variables
@@ -125,6 +124,14 @@ class SimpleDownloaderApp:
         self.mDownloadButton['state'] = tk.NORMAL
         self.refreshEntireUI()
 
+    def selectAllPrograms(self):
+        for checkbox in self.mProgramCheckboxes:
+            checkbox.check()
+
+    def unselectAllPrograms(self):
+        for checkbox in self.mProgramCheckboxes:
+            checkbox.uncheck()
+
     def configureStyle(self):
         defaultFont = tkFont.nametofont("TkDefaultFont")
         defaultFont.configure(size=12)
@@ -136,9 +143,18 @@ class SimpleDownloaderApp:
 
         mainLabel = ttk.Label(self.mRootElement, text="Select programs you wish to download:")
         mainLabel.grid(row=0, column=0, columnspan=len(AVAILABLE_PROGRAMS))
-        
+
+        optionFrame = ttk.Frame(self.mRootElement)
+        optionFrame.grid(row=1, column=0, columnspan=len(AVAILABLE_PROGRAMS))
+
+        selectAllCheckButton = tk.Checkbutton(
+            optionFrame, text="Select all", variable=self.mSelectAllVar, onvalue=True, offvalue=False,
+            command=lambda: self.selectAllPrograms() if self.mSelectAllVar.get() else self.unselectAllPrograms()
+        )
+        selectAllCheckButton.grid(row=1, column=0)
+
         allProgramSectionsFrame = ttk.Frame(self.mRootElement)
-        allProgramSectionsFrame.grid(row=1, column=0, columnspan=len(AVAILABLE_PROGRAMS))
+        allProgramSectionsFrame.grid(row=2, column=0, columnspan=len(AVAILABLE_PROGRAMS))
 
         currentSectionColumn = 0
         for sectionName, progToWingetIdMap in AVAILABLE_PROGRAMS.items():
@@ -169,14 +185,14 @@ class SimpleDownloaderApp:
             
             currentSectionColumn += 1
 
-        self.mDownloadButton.grid(row=2, column=0, columnspan=len(AVAILABLE_PROGRAMS))
+        self.mDownloadButton.grid(row=3, column=0, columnspan=len(AVAILABLE_PROGRAMS))
 
-        self.mCurrentStatusLabel.grid(row=3, column=0, sticky="we")
+        self.mCurrentStatusLabel.grid(row=4, column=0, sticky="we")
 
         progressBar = ttk.Progressbar(self.mRootElement, orient=tk.HORIZONTAL, variable=self.mProgressBarVar)
-        progressBar.grid(row=4, column=0, sticky="we", columnspan=len(AVAILABLE_PROGRAMS), padx=10, pady=10)
+        progressBar.grid(row=5, column=0, sticky="we", columnspan=len(AVAILABLE_PROGRAMS), padx=10, pady=10)
 
-        self.mLogFrame.grid(row=5, column=0, sticky="we", columnspan=len(AVAILABLE_PROGRAMS))
+        self.mLogFrame.grid(row=6, column=0, sticky="we", columnspan=len(AVAILABLE_PROGRAMS))
 
     def run(self):
         self.mRootElement.mainloop()
