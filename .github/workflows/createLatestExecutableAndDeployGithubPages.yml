@@ -1,4 +1,4 @@
-name: Create and package executable
+name: Create latest executable and deploy github pages
 
 on:
     push:
@@ -54,11 +54,6 @@ jobs:
         steps:
             - name: "Checkout repository"
               uses: actions/checkout@v4
-            - name: "Download execuable artifact"
-              uses: actions/download-artifact@v3
-              with:
-                name: simpleDownloader-release
-                path: gh_pages
             - name: "Setup Pages"
               uses: actions/configure-pages@v2
             - name: "Upload pages artifact"

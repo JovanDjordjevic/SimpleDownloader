@@ -1,8 +1,7 @@
 from app import SimpleDownloaderApp
 
-def main():
+def main() -> None:
     simpleDownloaderApp = SimpleDownloaderApp()
-    simpleDownloaderApp.setupUI()
     simpleDownloaderApp.run()
 
 if __name__ == '__main__':

@@ -12,7 +12,7 @@ class SimpleDownloaderApp:
         Main class for Simple Downloader app
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         # tkinter widgets and needed tk variables that must be globaly available
         self.mRootElement = tk.Tk()
         self.mDownloadButton = ttk.Button(self.mRootElement, text="Download selected", command=self.onDownloadButtonClicked)
@@ -32,11 +32,13 @@ class SimpleDownloaderApp:
         self.mSuccessfulJobs = 0
         self.mFailedJobs = 0
 
-    def refreshEntireUI(self):
+        self.setupUI()
+
+    def refreshEntireUI(self) -> None:
         self.mRootElement.update()
         self.mRootElement.update_idletasks()
 
-    def resetVariablesAndUI(self):
+    def resetVariablesAndUI(self) -> None:
         self.mNumJobs = 0
         self.mTotalCompletedJobs = 0
         self.mSuccessfulJobs = 0
@@ -52,7 +54,7 @@ class SimpleDownloaderApp:
 
         self.refreshEntireUI()
 
-    def downloadOne(self, programName : str, wingetId : str):
+    def downloadOne(self, programName : str, wingetId : str) -> None:
         singleProgramLog = CollapsibleFrame(self.mAllLogsCollapsible.subFrame, text=f"{programName}", relief="raised", borderwidth=1)
         singleProgramLog.grid(pady=2, padx=2, sticky="we")
 
@@ -79,7 +81,7 @@ class SimpleDownloaderApp:
             
             while process.poll() is None:
                 output = process.stdout.readline().strip()
-                if output:
+                if output and len(output) > 1:
                     wingetOutputTextArea.insert(tk.END, f"{output}\n")
                     self.refreshEntireUI()
 
@@ -110,12 +112,12 @@ class SimpleDownloaderApp:
         self.mProgressBarVar.set(self.mTotalCompletedJobs * 100 / self.mNumJobs)
         self.refreshEntireUI()
 
-    def downloadAllSelected(self):
+    def downloadAllSelected(self) -> None:
         for programCheckbox in self.mProgramCheckboxes:
             if programCheckbox.isChecked():
                 self.downloadOne(programCheckbox.getProgramName(), programCheckbox.getWingetId())
 
-    def onDownloadButtonClicked(self):
+    def onDownloadButtonClicked(self) -> None:
         self.resetVariablesAndUI()
         self.mDownloadButton['state'] = tk.DISABLED
         self.refreshEntireUI()
@@ -129,26 +131,19 @@ class SimpleDownloaderApp:
         self.mDownloadButton['state'] = tk.NORMAL
         self.refreshEntireUI()
 
-    def selectAllPrograms(self):
+    def selectAllPrograms(self) -> None:
         for checkbox in self.mProgramCheckboxes:
             checkbox.check()
 
-    def unselectAllPrograms(self):
+    def unselectAllPrograms(self) -> None:
         for checkbox in self.mProgramCheckboxes:
             checkbox.uncheck()
 
-    def configureStyle(self):
+    def configureStyle(self) -> None:
         defaultFont = tkFont.nametofont("TkDefaultFont")
         defaultFont.configure(size=12)
 
-    def setupUI(self):
-        self.mRootElement.title("Simple Downloader")
-
-        self.configureStyle()
-
-        mainLabel = ttk.Label(self.mRootElement, text="Select programs you wish to download:")
-        mainLabel.grid(row=0, column=0, columnspan=len(AVAILABLE_PROGRAMS))
-
+    def setupOptionsFrame(self) -> None:
         optionFrame = ttk.Frame(self.mRootElement)
         optionFrame.grid(row=1, column=0, columnspan=len(AVAILABLE_PROGRAMS))
 
@@ -164,6 +159,7 @@ class SimpleDownloaderApp:
         )
         requireUserInputCheckutton.grid(row=1, column=1)
 
+    def setupProgramSelectionFrame(self) -> None:
         allProgramSectionsFrame = ttk.Frame(self.mRootElement)
         allProgramSectionsFrame.grid(row=2, column=0, columnspan=len(AVAILABLE_PROGRAMS))
 
@@ -196,6 +192,18 @@ class SimpleDownloaderApp:
             
             currentSectionColumn += 1
 
+    def setupUI(self) -> None:
+        self.mRootElement.title("Simple Downloader")
+
+        self.configureStyle()
+
+        mainLabel = ttk.Label(self.mRootElement, text="Select programs you wish to download:")
+        mainLabel.grid(row=0, column=0, columnspan=len(AVAILABLE_PROGRAMS))
+
+        self.setupOptionsFrame()
+
+        self.setupProgramSelectionFrame()
+
         self.mDownloadButton.grid(row=3, column=0, columnspan=len(AVAILABLE_PROGRAMS))
 
         self.mCurrentStatusLabel.grid(row=4, column=0, sticky="we")
@@ -205,5 +213,5 @@ class SimpleDownloaderApp:
 
         self.mLogFrame.grid(row=6, column=0, sticky="we", columnspan=len(AVAILABLE_PROGRAMS))
 
-    def run(self):
+    def run(self) -> None:
         self.mRootElement.mainloop()

@@ -6,7 +6,7 @@ class ProgramCheckbox:
         Class that wraps a program to it's associated checkbox
     """
 
-    def __init__(self, programName : str, wingetId : str, root):
+    def __init__(self, programName : str, wingetId : str, root) -> None:
         self.programName = programName
         self.wingetId = wingetId
 
@@ -14,22 +14,22 @@ class ProgramCheckbox:
         checkbox = ttk.Checkbutton(root, text=self.programName, variable=self.checkBoxVar)
         checkbox.grid(row=0, column=1)
 
-    def isChecked(self):
+    def isChecked(self) -> bool:
         return self.checkBoxVar.get() == True
     
-    def check(self):
+    def check(self) -> None:
         self.checkBoxVar.set(True)
 
-    def uncheck(self):
+    def uncheck(self) -> None:
         self.checkBoxVar.set(False)
 
-    def flip(self):
+    def toggle(self) -> None:
         self.checkBoxVar.set(not self.checkBoxVar.get())
 
-    def getProgramName(self):
+    def getProgramName(self) -> str:
         return self.programName
 
-    def getWingetId(self):
+    def getWingetId(self) -> str:
         return self.wingetId
 
 class CollapsibleFrame(tk.Frame):
@@ -37,7 +37,7 @@ class CollapsibleFrame(tk.Frame):
         A collapsible frame that can hold other widgets inside of it
     """
 
-    def __init__(self, parent, text="", *args, **kwargs):
+    def __init__(self, parent, text="", *args, **kwargs) -> None:
         tk.Frame.__init__(self, parent, *args, **kwargs)
 
         self.show = tk.BooleanVar()
@@ -55,7 +55,7 @@ class CollapsibleFrame(tk.Frame):
         # insert all sub elements into this subFrame
         self.subFrame = tk.Frame(self, relief="sunken", borderwidth=1)
 
-    def toggle(self):
+    def toggle(self) -> None:
         if self.show.get():
             self.subFrame.grid()
             self.toggleButton.configure(text='-')
@@ -68,7 +68,7 @@ class VerticallyScrollableFrame(ttk.Frame):
         A frame that can be scrolled vertically
     """
 
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent, *args, **kwargs) -> None:
         ttk.Frame.__init__(self, parent, *args, **kwargs)
 
         # Create a canvas object and a vertical scrollbar for scrolling it.
@@ -87,7 +87,7 @@ class VerticallyScrollableFrame(ttk.Frame):
         self.interior.bind('<Configure>', self.configureInterior)
         self.canvas.bind('<Configure>', self.configureCanvas)
 
-    def configureInterior(self, event):
+    def configureInterior(self, event) -> None:
         # Update the scrollbars to match the size of the inner frame.
         interiorWidth = self.interior.winfo_reqwidth()
 
@@ -97,7 +97,7 @@ class VerticallyScrollableFrame(ttk.Frame):
             # Update the canvas's width to fit the inner frame.
             self.canvas.config(width=interiorWidth)
 
-    def configureCanvas(self, event):
+    def configureCanvas(self, event) -> None:
         canvasWidth = self.canvas.winfo_width()
 
         if self.interior.winfo_reqwidth() != canvasWidth:

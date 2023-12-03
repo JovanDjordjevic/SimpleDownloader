@@ -6,7 +6,11 @@ This software provides a simple GUI to select some commonly used programs for do
 Internally, `winget` is used to download and install specified programs.
 If a selected program already exists on the system, winget will attempt to upgrade it.
 
-## How to run locally (for windows)
+## How to use
+
+Download the latest release archive, unpack it and run the executable
+
+## How to run locally from source(for windows)
 
 Python must be installed on your system.
 After cloning the repo, navigate to the repo root folder and run:
@@ -20,5 +24,5 @@ python -m venv venv
 pip install -r requirements.txt
 
 # run the program
-python downloader.py
+python main.py
 ```
