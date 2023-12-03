@@ -35,11 +35,13 @@ jobs:
                 python -m pip install --upgrade pip
                 pip install -r requirements.txt
             - name: "Create executable"
-              run: pyinstaller main.py --name "simpleDownloader" --onefile --windowed
+              run: |
+                pyinstaller main.py --name "simpleDownloader" --onefile --windowed
+                copy dist\simpleDownloader.exe .
             - name: "Create release artifact"
               uses: actions/upload-artifact@v2
               with:
                 name: simpleDownloader-release
                 path: |
-                  dist\simpleDownloader.exe
+                  simpleDownloader.exe
                   icons
