@@ -36,12 +36,10 @@ jobs:
                 pip install -r requirements.txt
             - name: "Create executable"
               run: pyinstaller main.py --name "simpleDownloader" --onefile --windowed
-            - name: "Create archive artifact"
-              run: |
-                copy dist\simpleDownloader.exe .
-                Compress-Archive -Path "simpleDownloader.exe", "icons" -DestinationPath "simpleDownloader.zip"
-            - name: Upload artifact
+            - name: "Create release artifact"
               uses: actions/upload-artifact@v2
               with:
                 name: simpleDownloader-release
-                path: simpleDownloader.zip
+                path: |
+                  dist\simpleDownloader.exe
+                  icons
