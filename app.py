@@ -67,7 +67,11 @@ class SimpleDownloaderApp:
             self.mCurrentStatusVar.set(f"{self.mTotalCompletedJobs + 1}/{self.mNumJobs} Installing {programName}...")
             self.refreshEntireUI()
 
-            process = subprocess.Popen(["winget", "install", "-e", "--id", wingetId], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+            process = subprocess.Popen(
+                ["winget", "install", "-e", "--id", wingetId, "--silent", "--disable-interactivity", 
+                "--accept-package-agreements", "--accept-source-agreements"
+                ],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
             
             while process.poll() is None:
                 output = process.stdout.readline().strip()
