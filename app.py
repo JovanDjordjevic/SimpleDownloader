@@ -19,7 +19,8 @@ class SimpleDownloaderApp:
         self.mCurrentStatusVar = tk.StringVar()
         self.mCurrentStatusLabel = ttk.Label(self.mRootElement, textvariable=self.mCurrentStatusVar)
         self.mProgressBarVar = tk.DoubleVar()
-        self.mSelectAllVar = tk.BooleanVar()
+        self.mSelectAllVar = tk.BooleanVar(value=False)
+        self.mRequireUserInputVar = tk.BooleanVar(value=False)
         self.mLogFrame = VerticallyScrollableFrame(self.mRootElement)
         self.mAllLogsCollapsible = None
 
@@ -66,11 +67,15 @@ class SimpleDownloaderApp:
             self.mCurrentStatusVar.set(f"{self.mTotalCompletedJobs + 1}/{self.mNumJobs} Installing {programName}...")
             self.refreshEntireUI()
 
-            process = subprocess.Popen(
-                ["winget", "install", "-e", "--id", wingetId, "--silent", "--disable-interactivity", 
-                "--accept-package-agreements", "--accept-source-agreements"
-                ],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+            wingetOptions = ["winget", "install", "-e", "--id", wingetId, "--accept-package-agreements", "--accept-source-agreements"]
+            
+            if self.mRequireUserInputVar.get() == False:
+                wingetOptions.append("--silent")
+                wingetOptions.append("--disable-interactivity")
+
+            wingetOutputTextArea.insert(tk.END, f"Running winget with command:\n\t{' '.join(wingetOptions)}\n")
+
+            process = subprocess.Popen(wingetOptions, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
             
             while process.poll() is None:
                 output = process.stdout.readline().strip()
@@ -147,11 +152,17 @@ class SimpleDownloaderApp:
         optionFrame = ttk.Frame(self.mRootElement)
         optionFrame.grid(row=1, column=0, columnspan=len(AVAILABLE_PROGRAMS))
 
-        selectAllCheckButton = tk.Checkbutton(
+        selectAllCheckbutton = tk.Checkbutton(
             optionFrame, text="Select all", variable=self.mSelectAllVar, onvalue=True, offvalue=False,
             command=lambda: self.selectAllPrograms() if self.mSelectAllVar.get() else self.unselectAllPrograms()
         )
-        selectAllCheckButton.grid(row=1, column=0)
+        selectAllCheckbutton.grid(row=1, column=0)
+
+        requireUserInputCheckutton = tk.Checkbutton(
+            optionFrame, text="Require user input during installation", 
+            variable=self.mRequireUserInputVar, onvalue=True, offvalue=False
+        )
+        requireUserInputCheckutton.grid(row=1, column=1)
 
         allProgramSectionsFrame = ttk.Frame(self.mRootElement)
         allProgramSectionsFrame.grid(row=2, column=0, columnspan=len(AVAILABLE_PROGRAMS))
