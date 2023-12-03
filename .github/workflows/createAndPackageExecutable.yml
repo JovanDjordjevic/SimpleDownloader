@@ -25,9 +25,9 @@ jobs:
         runs-on: windows-latest
         steps:
             - name: "Checkout repository"
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
             - name: "Setup python 3.10"
-              uses: actions/setup-python@v2
+              uses: actions/setup-python@v4
               with:
                 python-version: 3.10
             - name: "Install dependencies"
@@ -39,7 +39,7 @@ jobs:
                 pyinstaller main.py --name "simpleDownloader" --onefile --windowed
                 copy dist\simpleDownloader.exe .
             - name: "Create release artifact"
-              uses: actions/upload-artifact@v2
+              uses: actions/upload-artifact@v3
               with:
                 name: simpleDownloader-release
                 path: |
@@ -54,7 +54,7 @@ jobs:
         needs: [buildExeOnWindows]
         steps:
             - name: "Checkout repository"
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
             - name: "Download execuable artifact"
               uses: actions/download-artifact@v3
               with:
