@@ -5,7 +5,7 @@ import tkinter.font as tkFont
 from tkinter import ttk
 
 from availablePrograms import AVAILABLE_PROGRAMS
-from utils import *
+from customWidgets import ScrollableFrame, ProgramCheckbox, CollapsibleFrame
 
 class SimpleDownloaderApp:
     """
@@ -15,13 +15,14 @@ class SimpleDownloaderApp:
     def __init__(self) -> None:
         # tkinter widgets and needed tk variables that must be globaly available
         self.mRootElement = tk.Tk()
-        self.mDownloadButton = ttk.Button(self.mRootElement, text="Download selected", command=self.onDownloadButtonClicked)
+        self.mRootFrame = ScrollableFrame(self.mRootElement)
+        self.mDownloadButton = ttk.Button(self.mRootFrame, text="Download selected", command=self.onDownloadButtonClicked)
         self.mCurrentStatusVar = tk.StringVar()
-        self.mCurrentStatusLabel = ttk.Label(self.mRootElement, textvariable=self.mCurrentStatusVar)
+        self.mCurrentStatusLabel = ttk.Label(self.mRootFrame, textvariable=self.mCurrentStatusVar)
         self.mProgressBarVar = tk.DoubleVar()
         self.mSelectAllVar = tk.BooleanVar(value=False)
         self.mRequireUserInputVar = tk.BooleanVar(value=False)
-        self.mLogFrame = VerticallyScrollableFrame(self.mRootElement)
+        self.mLogFrame = ScrollableFrame(self.mRootFrame, allowHorizontalScroll=False)
         self.mAllLogsCollapsible = None
 
         # other needed variables
@@ -46,10 +47,10 @@ class SimpleDownloaderApp:
         self.mCurrentStatusVar.set("")
         self.mProgressBarVar.set(0)
 
-        for widget in self.mLogFrame.interior.winfo_children():
+        for widget in self.mLogFrame.innerFrame.winfo_children():
             widget.destroy()
 
-        self.mAllLogsCollapsible = CollapsibleFrame(self.mLogFrame.interior, text='Detailed winget output per program', relief="raised", borderwidth=1)
+        self.mAllLogsCollapsible = CollapsibleFrame(self.mLogFrame, text='Detailed winget output per program', relief="raised", borderwidth=1)
         self.mAllLogsCollapsible.grid(row=0, column=0, columnspan=len(AVAILABLE_PROGRAMS), sticky="we")
 
         self.refreshEntireUI()
@@ -144,7 +145,7 @@ class SimpleDownloaderApp:
         defaultFont.configure(size=12)
 
     def setupOptionsFrame(self) -> None:
-        optionFrame = ttk.Frame(self.mRootElement)
+        optionFrame = ttk.Frame(self.mRootFrame)
         optionFrame.grid(row=1, column=0, columnspan=len(AVAILABLE_PROGRAMS))
 
         selectAllCheckbutton = tk.Checkbutton(
@@ -160,7 +161,7 @@ class SimpleDownloaderApp:
         requireUserInputCheckutton.grid(row=1, column=1)
 
     def setupProgramSelectionFrame(self) -> None:
-        allProgramSectionsFrame = ttk.Frame(self.mRootElement)
+        allProgramSectionsFrame = ttk.Frame(self.mRootFrame)
         allProgramSectionsFrame.grid(row=2, column=0, columnspan=len(AVAILABLE_PROGRAMS))
 
         currentSectionColumn = 0
@@ -193,11 +194,14 @@ class SimpleDownloaderApp:
             currentSectionColumn += 1
 
     def setupUI(self) -> None:
-        self.mRootElement.title("Simple Downloader")
-
         self.configureStyle()
 
-        mainLabel = ttk.Label(self.mRootElement, text="Select programs you wish to download:")
+        self.mRootElement.title("Simple Downloader")
+        self.mRootElement.geometry("1600x900")
+
+        self.mRootFrame.pack(fill=tk.BOTH, expand=True)
+
+        mainLabel = ttk.Label(self.mRootFrame, text="Select programs you wish to download:")
         mainLabel.grid(row=0, column=0, columnspan=len(AVAILABLE_PROGRAMS))
 
         self.setupOptionsFrame()
@@ -208,7 +212,7 @@ class SimpleDownloaderApp:
 
         self.mCurrentStatusLabel.grid(row=4, column=0, sticky="we")
 
-        progressBar = ttk.Progressbar(self.mRootElement, orient=tk.HORIZONTAL, variable=self.mProgressBarVar)
+        progressBar = ttk.Progressbar(self.mRootFrame, orient=tk.HORIZONTAL, variable=self.mProgressBarVar)
         progressBar.grid(row=5, column=0, sticky="we", columnspan=len(AVAILABLE_PROGRAMS), padx=10, pady=10)
 
         self.mLogFrame.grid(row=6, column=0, sticky="we", columnspan=len(AVAILABLE_PROGRAMS))
