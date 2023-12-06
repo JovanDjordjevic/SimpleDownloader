@@ -3,9 +3,13 @@ import subprocess
 import tkinter as tk
 import tkinter.font as tkFont
 from tkinter import ttk
-
+from enum import Enum
 from availablePrograms import AVAILABLE_PROGRAMS
 from customWidgets import ScrollableFrame, ProgramCheckbox, CollapsibleFrame
+
+class operationType(str, Enum):
+    INSTALL = "install",
+    UNINSTALL = "uninstall"
 
 class SimpleDownloaderApp:
     """
@@ -16,7 +20,9 @@ class SimpleDownloaderApp:
         # tkinter widgets and needed tk variables that must be globaly available
         self.mRootElement = tk.Tk()
         self.mRootFrame = ScrollableFrame(self.mRootElement)
-        self.mDownloadButton = ttk.Button(self.mRootFrame, text="Download selected", command=self.onDownloadButtonClicked)
+        self.mButtonFrame = ttk.Frame(self.mRootFrame)
+        self.mInstallButton = ttk.Button(self.mButtonFrame, text="Install selected", command=self.onInstallButtonClicked)
+        self.mUninstallButton = ttk.Button(self.mButtonFrame, text="Uninstall selected", command=self.onUninstallButtonClicked)
         self.mCurrentStatusVar = tk.StringVar()
         self.mCurrentStatusLabel = ttk.Label(self.mRootFrame, textvariable=self.mCurrentStatusVar)
         self.mProgressBarVar = tk.DoubleVar()
@@ -55,23 +61,29 @@ class SimpleDownloaderApp:
 
         self.refreshEntireUI()
 
-    def downloadOne(self, programName : str, wingetId : str) -> None:
+    def handleSingleProgram(self, programName : str, wingetId : str, operation : operationType) -> None:
         singleProgramLog = CollapsibleFrame(self.mAllLogsCollapsible.subFrame, text=f"{programName}", relief="raised", borderwidth=1)
         singleProgramLog.grid(pady=2, padx=2, sticky="we")
 
         wingetOutputTextArea = tk.Text(singleProgramLog.subFrame, wrap=tk.WORD, width=150, height=5)
         wingetOutputTextArea.grid(padx=10, pady=10)
 
-        installedSuccessfully = False
+        handledSuccessfully = False
 
         try:
             wingetOutputTextArea.insert(tk.END, f"Installing {programName}...\n")
 
             self.mCurrentStatusVar.set(f"{self.mTotalCompletedJobs + 1}/{self.mNumJobs} Installing {programName}...")
             self.refreshEntireUI()
-
-            wingetOptions = ["winget", "install", "-e", "--id", wingetId, "--accept-package-agreements", "--accept-source-agreements"]
             
+            operationCmd = "install" if operation == operationType.INSTALL else "uninstall"
+
+            wingetOptions = ["winget", operationCmd, "-e", "--id", wingetId]
+
+            if operation == operationType.INSTALL:
+                wingetOptions.append("--accept-package-agreements")
+                wingetOptions.append("--accept-source-agreements")
+
             if self.mRequireUserInputVar.get() == False:
                 wingetOptions.append("--silent")
                 wingetOptions.append("--disable-interactivity")
@@ -87,16 +99,17 @@ class SimpleDownloaderApp:
                     self.refreshEntireUI()
 
             if process.returncode == 0:
-                wingetOutputTextArea.insert(tk.END, f"{programName} has been installed successfully.\n")
-                installedSuccessfully = True
+                wingetOutputTextArea.insert(tk.END, f"{programName} has been {operationCmd}ed successfully.\n")
+                handledSuccessfully = True
             else:
-                wingetOutputTextArea.insert(tk.END, f"{programName} was not installed (an error occured or it already exists).\n")
+                additionalInfo = "already exists" if operation == operationType.INSTALL else "does not exist"
+                wingetOutputTextArea.insert(tk.END, f"{programName} was not {operationCmd}ed (an error occured or it {additionalInfo}).\n")
 
         except Exception as e: 
-            wingetOutputTextArea.insert(tk.END, f"Failed to install {programName}. Caught exception: {e}\n")
+            wingetOutputTextArea.insert(tk.END, f"Failed to {operationCmd} {programName}. Caught exception: {e}\n")
 
         indicatorIconPath = ""
-        if installedSuccessfully:
+        if handledSuccessfully:
             self.mSuccessfulJobs += 1
             indicatorIconPath = "icons/success.ico"
         else:
@@ -113,23 +126,42 @@ class SimpleDownloaderApp:
         self.mProgressBarVar.set(self.mTotalCompletedJobs * 100 / self.mNumJobs)
         self.refreshEntireUI()
 
-    def downloadAllSelected(self) -> None:
+    def installAllSelected(self) -> None:
         for programCheckbox in self.mProgramCheckboxes:
             if programCheckbox.isChecked():
-                self.downloadOne(programCheckbox.getProgramName(), programCheckbox.getWingetId())
+                self.handleSingleProgram(programCheckbox.getProgramName(), programCheckbox.getWingetId(), operationType.INSTALL)
 
-    def onDownloadButtonClicked(self) -> None:
+    def uninstallAllSelected(self) -> None:
+        for programCheckbox in self.mProgramCheckboxes:
+            if programCheckbox.isChecked():
+                self.handleSingleProgram(programCheckbox.getProgramName(), programCheckbox.getWingetId(), operationType.UNINSTALL)
+
+    def onInstallButtonClicked(self) -> None:
         self.resetVariablesAndUI()
-        self.mDownloadButton['state'] = tk.DISABLED
+        self.mInstallButton['state'] = tk.DISABLED
         self.refreshEntireUI()
 
         for programCheckbox in self.mProgramCheckboxes:
             if programCheckbox.isChecked():
                 self.mNumJobs += 1
 
-        self.downloadAllSelected()
+        self.installAllSelected()
 
-        self.mDownloadButton['state'] = tk.NORMAL
+        self.mInstallButton['state'] = tk.NORMAL
+        self.refreshEntireUI()
+
+    def onUninstallButtonClicked(self) -> None:
+        self.resetVariablesAndUI()
+        self.mUninstallButton['state'] = tk.DISABLED
+        self.refreshEntireUI()
+
+        for programCheckbox in self.mProgramCheckboxes:
+            if programCheckbox.isChecked():
+                self.mNumJobs += 1
+
+        self.uninstallAllSelected()
+
+        self.mUninstallButton['state'] = tk.NORMAL
         self.refreshEntireUI()
 
     def selectAllPrograms(self) -> None:
@@ -155,10 +187,15 @@ class SimpleDownloaderApp:
         selectAllCheckbutton.grid(row=1, column=0)
 
         requireUserInputCheckutton = tk.Checkbutton(
-            optionFrame, text="Require user input during installation", 
+            optionFrame, text="Require user input during installation/uninstallation", 
             variable=self.mRequireUserInputVar, onvalue=True, offvalue=False
         )
         requireUserInputCheckutton.grid(row=1, column=1)
+
+    def setupButtonFrame(self) -> None:
+        self.mButtonFrame.grid(row=3, column=0, columnspan=len(AVAILABLE_PROGRAMS))
+        self.mInstallButton.grid(row=0, column=0)
+        self.mUninstallButton.grid(row=0, column=1)
 
     def setupProgramSelectionFrame(self) -> None:
         allProgramSectionsFrame = ttk.Frame(self.mRootFrame)
@@ -208,7 +245,7 @@ class SimpleDownloaderApp:
 
         self.setupProgramSelectionFrame()
 
-        self.mDownloadButton.grid(row=3, column=0, columnspan=len(AVAILABLE_PROGRAMS))
+        self.setupButtonFrame()
 
         self.mCurrentStatusLabel.grid(row=4, column=0, sticky="we")
 
