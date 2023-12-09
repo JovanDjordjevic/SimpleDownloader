@@ -76,9 +76,7 @@ class SimpleDownloaderApp:
             self.mCurrentStatusVar.set(f"{self.mTotalCompletedJobs + 1}/{self.mNumJobs} Installing {programName}...")
             self.refreshEntireUI()
             
-            operationCmd = "install" if operation == operationType.INSTALL else "uninstall"
-
-            wingetOptions = ["winget", operationCmd, "-e", "--id", wingetId]
+            wingetOptions = ["winget", operation.value, "-e", "--id", wingetId]
 
             if operation == operationType.INSTALL:
                 wingetOptions.append("--accept-package-agreements")
@@ -99,14 +97,14 @@ class SimpleDownloaderApp:
                     self.refreshEntireUI()
 
             if process.returncode == 0:
-                wingetOutputTextArea.insert(tk.END, f"{programName} has been {operationCmd}ed successfully.\n")
+                wingetOutputTextArea.insert(tk.END, f"{programName} has been {operation.value}ed successfully.\n")
                 handledSuccessfully = True
             else:
                 additionalInfo = "already exists" if operation == operationType.INSTALL else "does not exist"
-                wingetOutputTextArea.insert(tk.END, f"{programName} was not {operationCmd}ed (an error occured or it {additionalInfo}).\n")
+                wingetOutputTextArea.insert(tk.END, f"{programName} was not {operation.value}ed (an error occured or it {additionalInfo}).\n")
 
         except Exception as e: 
-            wingetOutputTextArea.insert(tk.END, f"Failed to {operationCmd} {programName}. Caught exception: {e}\n")
+            wingetOutputTextArea.insert(tk.END, f"Failed to {operation.value} {programName}. Caught exception: {e}\n")
 
         indicatorIconPath = ""
         if handledSuccessfully:
@@ -181,14 +179,21 @@ class SimpleDownloaderApp:
         optionFrame.grid(row=1, column=0, columnspan=len(AVAILABLE_PROGRAMS))
 
         selectAllCheckbutton = tk.Checkbutton(
-            optionFrame, text="Select all", variable=self.mSelectAllVar, onvalue=True, offvalue=False,
+            optionFrame,
+            text="Select all",
+            variable=self.mSelectAllVar,
+            onvalue=True,
+            offvalue=False,
             command=lambda: self.selectAllPrograms() if self.mSelectAllVar.get() else self.unselectAllPrograms()
         )
         selectAllCheckbutton.grid(row=1, column=0)
 
         requireUserInputCheckutton = tk.Checkbutton(
-            optionFrame, text="Require user input during installation/uninstallation", 
-            variable=self.mRequireUserInputVar, onvalue=True, offvalue=False
+            optionFrame,
+            text="Require user input during installation/uninstallation", 
+            variable=self.mRequireUserInputVar,
+            onvalue=True,
+            offvalue=False
         )
         requireUserInputCheckutton.grid(row=1, column=1)
 
@@ -242,9 +247,7 @@ class SimpleDownloaderApp:
         mainLabel.grid(row=0, column=0, columnspan=len(AVAILABLE_PROGRAMS))
 
         self.setupOptionsFrame()
-
         self.setupProgramSelectionFrame()
-
         self.setupButtonFrame()
 
         self.mCurrentStatusLabel.grid(row=4, column=0, sticky="we")
