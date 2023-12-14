@@ -4,12 +4,25 @@ import tkinter as tk
 import tkinter.font as tkFont
 from tkinter import ttk
 from enum import Enum
+from threading import Thread
+from queue import Queue
+
 from availablePrograms import AVAILABLE_PROGRAMS
 from customWidgets import ScrollableFrame, ProgramCheckbox, CollapsibleFrame
 
-class operationType(str, Enum):
+class OperationType(str, Enum):
     INSTALL = "install",
     UNINSTALL = "uninstall"
+
+class WingetQueueSpecialMessage(str, Enum):
+    ENABLE_BUTTONS = "enable buttons",
+    EXIT = "exit"
+
+class WingetQueueMessage:
+    def __init__(self, programName : str, wingetId : str, operation : OperationType) -> None:
+        self.programName = programName
+        self.wingetId = wingetId
+        self.operation = operation
 
 class SimpleDownloaderApp:
     """
@@ -38,8 +51,29 @@ class SimpleDownloaderApp:
         self.mTotalCompletedJobs = 0
         self.mSuccessfulJobs = 0
         self.mFailedJobs = 0
+        
+        # winget thread setup
+        self.wingetQueue = Queue()
+        self.wingetThread = Thread(target=self.wingetThreadFunc)
+        self.wingetThread.daemon = True
+        self.wingetThread.start()
 
         self.setupUI()
+
+    def wingetThreadFunc(self) -> None:
+        while True:
+            message = self.wingetQueue.get()
+            if message == WingetQueueSpecialMessage.EXIT:
+                break
+            elif message == WingetQueueSpecialMessage.ENABLE_BUTTONS:
+                self.enableButtons()
+            else:
+                assert isinstance(message, WingetQueueMessage)
+                self.handleSingleProgram(message.programName, message.wingetId, message.operation)
+
+    def onMainWindowClosed(self) -> None:
+        self.wingetQueue.put(WingetQueueSpecialMessage.EXIT)
+        self.mRootElement.destroy()
 
     def refreshEntireUI(self) -> None:
         self.mRootElement.update()
@@ -61,7 +95,7 @@ class SimpleDownloaderApp:
 
         self.refreshEntireUI()
 
-    def handleSingleProgram(self, programName : str, wingetId : str, operation : operationType) -> None:
+    def handleSingleProgram(self, programName : str, wingetId : str, operation : OperationType) -> None:
         singleProgramLog = CollapsibleFrame(self.mAllLogsCollapsible.subFrame, text=f"{programName}", relief="raised", borderwidth=1)
         singleProgramLog.grid(pady=2, padx=2, sticky="we")
 
@@ -78,7 +112,7 @@ class SimpleDownloaderApp:
             
             wingetOptions = ["winget", operation.value, "-e", "--id", wingetId]
 
-            if operation == operationType.INSTALL:
+            if operation == OperationType.INSTALL:
                 wingetOptions.append("--accept-package-agreements")
                 wingetOptions.append("--accept-source-agreements")
 
@@ -100,7 +134,7 @@ class SimpleDownloaderApp:
                 wingetOutputTextArea.insert(tk.END, f"{programName} has been {operation.value}ed successfully.\n")
                 handledSuccessfully = True
             else:
-                additionalInfo = "already exists" if operation == operationType.INSTALL else "does not exist"
+                additionalInfo = "already exists" if operation == OperationType.INSTALL else "does not exist"
                 wingetOutputTextArea.insert(tk.END, f"{programName} was not {operation.value}ed (an error occured or it {additionalInfo}).\n")
 
         except Exception as e: 
@@ -127,39 +161,38 @@ class SimpleDownloaderApp:
     def installAllSelected(self) -> None:
         for programCheckbox in self.mProgramCheckboxes:
             if programCheckbox.isChecked():
-                self.handleSingleProgram(programCheckbox.getProgramName(), programCheckbox.getWingetId(), operationType.INSTALL)
+                self.wingetQueue.put(WingetQueueMessage(programCheckbox.getProgramName(), programCheckbox.getWingetId(), OperationType.INSTALL))
+        self.wingetQueue.put(WingetQueueSpecialMessage.ENABLE_BUTTONS)
 
     def uninstallAllSelected(self) -> None:
         for programCheckbox in self.mProgramCheckboxes:
             if programCheckbox.isChecked():
-                self.handleSingleProgram(programCheckbox.getProgramName(), programCheckbox.getWingetId(), operationType.UNINSTALL)
+                self.wingetQueue.put(WingetQueueMessage(programCheckbox.getProgramName(), programCheckbox.getWingetId(), OperationType.UNINSTALL))
+        self.wingetQueue.put(WingetQueueSpecialMessage.ENABLE_BUTTONS)
 
     def onInstallButtonClicked(self) -> None:
-        self.resetVariablesAndUI()
-        self.mInstallButton['state'] = tk.DISABLED
-        self.refreshEntireUI()
-
+        self.disableButtons()
         for programCheckbox in self.mProgramCheckboxes:
             if programCheckbox.isChecked():
                 self.mNumJobs += 1
-
         self.installAllSelected()
 
-        self.mInstallButton['state'] = tk.NORMAL
-        self.refreshEntireUI()
-
     def onUninstallButtonClicked(self) -> None:
-        self.resetVariablesAndUI()
-        self.mUninstallButton['state'] = tk.DISABLED
-        self.refreshEntireUI()
-
+        self.disableButtons()
         for programCheckbox in self.mProgramCheckboxes:
             if programCheckbox.isChecked():
                 self.mNumJobs += 1
-
         self.uninstallAllSelected()
 
+    def enableButtons(self) -> None:
+        self.mInstallButton['state'] = tk.NORMAL
         self.mUninstallButton['state'] = tk.NORMAL
+        self.refreshEntireUI()
+
+    def disableButtons(self) -> None:
+        self.resetVariablesAndUI()
+        self.mInstallButton['state'] = tk.DISABLED
+        self.mUninstallButton['state'] = tk.DISABLED
         self.refreshEntireUI()
 
     def selectAllPrograms(self) -> None:
@@ -240,6 +273,8 @@ class SimpleDownloaderApp:
 
         self.mRootElement.title("Simple Downloader")
         self.mRootElement.geometry("1600x900")
+
+        self.mRootElement.protocol("WM_DELETE_WINDOW", self.onMainWindowClosed)
 
         self.mRootFrame.pack(fill=tk.BOTH, expand=True)
 
