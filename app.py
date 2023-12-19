@@ -2,7 +2,7 @@ from PIL import Image, ImageTk
 import subprocess
 import tkinter as tk
 import tkinter.font as tkFont
-from tkinter import ttk
+import ttkbootstrap as ttk
 from enum import Enum
 from threading import Thread
 from queue import Queue
@@ -18,6 +18,14 @@ class WingetQueueSpecialMessage(str, Enum):
     ENABLE_BUTTONS = "enable buttons",
     EXIT = "exit"
 
+class Themes(str, Enum):
+    DARKLY = "darkly",
+    CYBORG = "cyborg",
+    VAPOR = "vapor",
+    COSMO = "cosmo",
+    FLATLY = "flatly",
+    JOURNAL = "journal"
+
 class WingetQueueMessage:
     def __init__(self, programName : str, wingetId : str, operation : OperationType) -> None:
         self.programName = programName
@@ -31,7 +39,7 @@ class SimpleDownloaderApp:
 
     def __init__(self) -> None:
         # tkinter widgets and needed tk variables that must be globaly available
-        self.mRootElement = tk.Tk()
+        self.mRootElement = ttk.Window()
         self.mRootFrame = ScrollableFrame(self.mRootElement)
         self.mButtonFrame = ttk.Frame(self.mRootFrame)
         self.mInstallButton = ttk.Button(self.mButtonFrame, text="Install selected", command=self.onInstallButtonClicked)
@@ -42,7 +50,8 @@ class SimpleDownloaderApp:
         self.mSelectAllVar = tk.BooleanVar(value=False)
         self.mRequireUserInputVar = tk.BooleanVar(value=False)
         self.mLogFrame = ScrollableFrame(self.mRootFrame, allowHorizontalScroll=False)
-        self.mAllLogsCollapsible = None
+        self.mAllLogsCollapsibleFrame = None
+        self.mCurrentThemeVar = tk.StringVar(value=Themes.DARKLY)
 
         # other needed variables
         self.mAllImages = dict()
@@ -90,13 +99,13 @@ class SimpleDownloaderApp:
         for widget in self.mLogFrame.innerFrame.winfo_children():
             widget.destroy()
 
-        self.mAllLogsCollapsible = CollapsibleFrame(self.mLogFrame, text='Detailed winget output per program', relief="raised", borderwidth=1)
-        self.mAllLogsCollapsible.grid(row=0, column=0, columnspan=len(AVAILABLE_PROGRAMS), sticky="we")
+        self.mAllLogsCollapsibleFrame = CollapsibleFrame(self.mLogFrame, text='Detailed winget output per program', relief="raised", borderwidth=1)
+        self.mAllLogsCollapsibleFrame.grid(row=0, column=0, columnspan=len(AVAILABLE_PROGRAMS), sticky="we")
 
         self.refreshEntireUI()
 
     def handleSingleProgram(self, programName : str, wingetId : str, operation : OperationType) -> None:
-        singleProgramLog = CollapsibleFrame(self.mAllLogsCollapsible.subFrame, text=f"{programName}", relief="raised", borderwidth=1)
+        singleProgramLog = CollapsibleFrame(self.mAllLogsCollapsibleFrame.subFrame, text=f"{programName}", relief="raised", borderwidth=1)
         singleProgramLog.grid(pady=2, padx=2, sticky="we")
 
         wingetOutputTextArea = tk.Text(singleProgramLog.subFrame, wrap=tk.WORD, width=150, height=5)
@@ -207,9 +216,30 @@ class SimpleDownloaderApp:
         defaultFont = tkFont.nametofont("TkDefaultFont")
         defaultFont.configure(size=12)
 
+    def setTheme(self, themeName : str) -> None:
+        self.mRootElement.style.theme_use(themename=themeName)
+        self.mCurrentThemeVar.set(themeName)
+
+    def setupTopBar(self) -> None:
+        topBarFrame = ttk.Frame(self.mRootFrame)
+        topBarFrame.grid(row=0, column=0, sticky='w', columnspan=len(AVAILABLE_PROGRAMS))
+
+        themeLabel = ttk.Label(topBarFrame, text="Select theme:")
+        themeLabel.grid(row=0, column=0)
+
+        availableThemes = [theme.value for theme in Themes]
+        themeOptions = ttk.OptionMenu(
+            topBarFrame,
+            self.mCurrentThemeVar,
+            self.mCurrentThemeVar.get(),
+            *availableThemes,
+            command=self.setTheme
+        )
+        themeOptions.grid(row=0, column=1)
+
     def setupOptionsFrame(self) -> None:
         optionFrame = ttk.Frame(self.mRootFrame)
-        optionFrame.grid(row=1, column=0, columnspan=len(AVAILABLE_PROGRAMS))
+        optionFrame.grid(row=2, column=0, columnspan=len(AVAILABLE_PROGRAMS))
 
         selectAllCheckbutton = tk.Checkbutton(
             optionFrame,
@@ -230,14 +260,9 @@ class SimpleDownloaderApp:
         )
         requireUserInputCheckutton.grid(row=1, column=1)
 
-    def setupButtonFrame(self) -> None:
-        self.mButtonFrame.grid(row=3, column=0, columnspan=len(AVAILABLE_PROGRAMS))
-        self.mInstallButton.grid(row=0, column=0)
-        self.mUninstallButton.grid(row=0, column=1)
-
     def setupProgramSelectionFrame(self) -> None:
         allProgramSectionsFrame = ttk.Frame(self.mRootFrame)
-        allProgramSectionsFrame.grid(row=2, column=0, columnspan=len(AVAILABLE_PROGRAMS))
+        allProgramSectionsFrame.grid(row=3, column=0, columnspan=len(AVAILABLE_PROGRAMS))
 
         currentSectionColumn = 0
         for sectionName, progToWingetIdMap in AVAILABLE_PROGRAMS.items():
@@ -268,18 +293,24 @@ class SimpleDownloaderApp:
             
             currentSectionColumn += 1
 
+    def setupButtonFrame(self) -> None:
+        self.mButtonFrame.grid(row=4, column=0, columnspan=len(AVAILABLE_PROGRAMS))
+        self.mInstallButton.grid(row=0, column=0)
+        self.mUninstallButton.grid(row=0, column=1)
+
     def setupUI(self) -> None:
         self.configureStyle()
 
         self.mRootElement.title("Simple Downloader")
-        self.mRootElement.geometry("1600x900")
-
+        self.mRootElement.geometry("1920x1080")
         self.mRootElement.protocol("WM_DELETE_WINDOW", self.onMainWindowClosed)
-
         self.mRootFrame.pack(fill=tk.BOTH, expand=True)
+        self.setTheme(self.mCurrentThemeVar.get())
+        
+        self.setupTopBar()
 
         mainLabel = ttk.Label(self.mRootFrame, text="Select programs you wish to download:")
-        mainLabel.grid(row=0, column=0, columnspan=len(AVAILABLE_PROGRAMS))
+        mainLabel.grid(row=1, column=0, columnspan=len(AVAILABLE_PROGRAMS))
 
         self.setupOptionsFrame()
         self.setupProgramSelectionFrame()
