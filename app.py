@@ -152,15 +152,12 @@ class SimpleDownloaderApp:
         indicatorIconPath = ""
         if handledSuccessfully:
             self.mSuccessfulJobs += 1
-            indicatorIconPath = "icons/success.ico"
+            indicatorIconName = "successIcon"
         else:
             self.mFailedJobs += 1
-            indicatorIconPath = "icons/error.ico"
+            indicatorIconName = "errorIcon"
 
-        indicatorIcon = ImageTk.PhotoImage(Image.open(indicatorIconPath))
-        imageLabel = ttk.Label(singleProgramLog.mainFrame, image=indicatorIcon)
-        # Keep a reference to the image to prevent it from being garbage collected
-        imageLabel.image = indicatorIcon
+        imageLabel = ttk.Label(singleProgramLog.mainFrame, image=self.mAllImages[indicatorIconName])
         imageLabel.grid(row=0, column=2)
 
         self.mTotalCompletedJobs += 1
@@ -215,6 +212,16 @@ class SimpleDownloaderApp:
     def configureStyle(self) -> None:
         defaultFont = tkFont.nametofont("TkDefaultFont")
         defaultFont.configure(size=12)
+
+    def loadResources(self) -> None:
+        # load all program icons
+        for _, progToWingetIdMap in AVAILABLE_PROGRAMS.items():
+            for programName, wingetId in progToWingetIdMap.items():
+                self.mAllImages[programName] = ImageTk.PhotoImage(Image.open(f"icons/{wingetId}.ico"))
+
+        # load other icons
+        self.mAllImages['successIcon'] = ImageTk.PhotoImage(Image.open("icons/success.ico"))
+        self.mAllImages['errorIcon'] = ImageTk.PhotoImage(Image.open("icons/error.ico"))
 
     def setTheme(self, themeName : str) -> None:
         self.mRootElement.style.theme_use(themename=themeName)
@@ -277,12 +284,6 @@ class SimpleDownloaderApp:
                 checkboxAndIconFrame = ttk.Frame(singleSectionFrame)
                 checkboxAndIconFrame.grid(row=singleProgramRow, column=0, sticky="we")
 
-                # Keep a reference to the image to prevent it from being garbage collected
-                self.mAllImages[programName] = ImageTk.PhotoImage(
-                    Image.open(f"icons/{wingetId}.ico")
-                )
-
-                # image will be container within a label isntead of text
                 imageLabel = ttk.Label(checkboxAndIconFrame, image=self.mAllImages[programName])
                 imageLabel.grid(row=0, column=0)
 
@@ -299,6 +300,7 @@ class SimpleDownloaderApp:
         self.mUninstallButton.grid(row=0, column=1)
 
     def setupUI(self) -> None:
+        self.loadResources()
         self.configureStyle()
 
         self.mRootElement.title("Simple Downloader")
